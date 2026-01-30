@@ -1,22 +1,26 @@
-# Compiled binaries
+# Compiled files
+build/
 bin/
-*.o
-*.so
-*.exe
-
-# Build results
 [Dd]ebug/
 [Rr]elease/
 x64/
 x86/
+*.o
+*.so
+*.exe
 *.dll
 *.lib
 *.exp
 
-# Data files
-data/images/input/*.png
-data/images/input/*.jpg
-data/images/input/*.tiff
+# Data files (keep directory structure)
+data/images/*.pgm
+data/output/*.pgm
+!data/images/.gitkeep
+!data/output/.gitkeep
+
+# Graphs (keep directory structure)
+graphs/*.png
+!graphs/.gitkeep
 
 # Python
 __pycache__/
