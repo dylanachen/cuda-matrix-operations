@@ -49,7 +49,7 @@ __global__ void matrixMultiplyTiled(float *A, float *B, float *C, int N) {
 }
 
 // Exposed C function for Python
-extern "C" __declspec(dllexport) void gpu_matrix_multiply_tiled(float *h_A, float *h_B, float *h_C, int N) {
+extern "C" __declspec(dllexport) void gpu_matrix_multiply(float *h_A, float *h_B, float *h_C, int N) {
     size_t size = N * N * sizeof(float);
     float *d_A, *d_B, *d_C;
 
