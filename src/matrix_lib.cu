@@ -1,10 +1,7 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <cuda.h>
 #include <cuda_runtime.h>
-#include <time.h>
 
-// GPU Matrix Multiplication using Tiling for better performance
+// GPU Matrix Multiplication Kernel using Tiling, exposed to library
 #define TILE_WIDTH 16
 
 __global__ void matrixMultiplyTiled(float *A, float *B, float *C, int N) {
@@ -51,83 +48,31 @@ __global__ void matrixMultiplyTiled(float *A, float *B, float *C, int N) {
     }
 }
 
-// Set up and launch kernel, measure execution time
-int main(int argc, char **argv) {
-    // Accepting matrix size from CLI argument
-    int N = (argc > 1) ? atoi(argv[1]) : 1024;
-    if (N <= 0) {
-        fprintf(stderr, "Error: Matrix size N must be a positive integer.\n");
-        return EXIT_FAILURE;
-    }
-
-    // Check for CUDA-capable device
-    int deviceCount;
-    cudaGetDeviceCount(&deviceCount);
-    if (deviceCount == 0) {
-        fprintf(stderr, "Error: No CUDA-capable devices found.\n");
-        return EXIT_FAILURE;
-    }
-
-    // Get and print device properties
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, 0);
-    printf("Using device: %s\n", prop.name);
-    printf("Matrix size: %d x %d\n", N, N);
-
+// Exposed C function for Python
+extern "C" __declspec(dllexport) void gpu_matrix_multiply_tiled(float *h_A, float *h_B, float *h_C, int N) {
     size_t size = N * N * sizeof(float);
-    
-    // Allocate memory
-    float *h_A = (float *)malloc(size);
-    float *h_B = (float *)malloc(size);
-    float *h_C = (float *)malloc(size);
-    
-    // Set seed for reproducibility
-    srand(42);
-    for (int i = 0; i < N * N; i++) {
-        h_A[i] = rand() % 100 / 100.0f;
-        h_B[i] = rand() % 100 / 100.0f;
-    }
-    
-    // Device memory allocation
     float *d_A, *d_B, *d_C;
-    cudaMalloc(&d_A, size);
-    cudaMalloc(&d_B, size);
-    cudaMalloc(&d_C, size);
-    
-    // Copy data to device
+
+    // Allocate device memory
+    cudaMalloc((void **)&d_A, size);
+    cudaMalloc((void **)&d_B, size);
+    cudaMalloc((void **)&d_C, size);
+
+    // Copy data from host to device
     cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
     cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
-    
+
     // Kernel configuration
     dim3 dimBlock(TILE_WIDTH, TILE_WIDTH);
     dim3 dimGrid((N + TILE_WIDTH - 1) / TILE_WIDTH, (N + TILE_WIDTH - 1) / TILE_WIDTH);
-    
-    // Timing CUDA events
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    
-    // Run and measure time
-    cudaEventRecord(start);
+
+    // Launch  tiled matrix multiplication kernel, synchronize
     matrixMultiplyTiled<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, N);
-    // Check for kernel launch errors if present
-    cudaGetLastError();
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    
-    // Calculate time elapsed, copy result back to host
-    float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
+    cudaDeviceSynchronize();
+
+    // Copy result matrix from device to host
     cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
-    
-    // Print execution time in seconds
-    printf("Tiled CUDA execution time (N=%d): %.6f seconds (%.3f ms)\n", N, milliseconds / 1000.0f, milliseconds);
-    
-    // Clean up
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
+
+    // Free device memory
     cudaFree(d_A); cudaFree(d_B); cudaFree(d_C);
-    free(h_A); free(h_B); free(h_C);
-    
-    return 0;
 }

@@ -4,6 +4,15 @@ bin/
 *.so
 *.exe
 
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.dll
+*.lib
+*.exp
+
 # Data files
 data/images/input/*.png
 data/images/input/*.jpg
