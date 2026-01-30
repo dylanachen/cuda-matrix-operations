@@ -28,6 +28,7 @@ __global__ void matrixMultiplyGPU(float *A, float *B, float *C, int N) {
         } \
     } while (0)
 
+// Set up and launch kernel, measure execution time
 int main(int argc, char **argv) {
     // Accepting matrix size from CLI argument
     int N = (argc > 1) ? atoi(argv[1]) : 1024;
@@ -93,7 +94,7 @@ int main(int argc, char **argv) {
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
 
-    // Calculate time elapsed
+    // Calculate time elapsed, copy result back to host
     float milliseconds = 0;
     CUDA_CHECK(cudaEventElapsedTime(&milliseconds, start, stop));
     CUDA_CHECK(cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost));

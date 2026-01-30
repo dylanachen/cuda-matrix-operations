@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     
-    // Calculate time elapsed
+    // Calculate time elapsed, copy result back to host
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
     cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
