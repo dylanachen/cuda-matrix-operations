@@ -18,6 +18,7 @@ __global__ void matrixMultiplyGPU(float *A, float *B, float *C, int N) {
     }
 }
 
+// Error checking
 #define CUDA_CHECK(call) \
     do { \
         cudaError_t err = call; \
@@ -37,6 +38,15 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+    // Check for CUDA-capable device
+    int deviceCount;
+    cudaGetDeviceCount(&deviceCount);
+    if (deviceCount == 0) {
+        fprintf(stderr, "Error: No CUDA-capable devices found.\n");
+        return EXIT_FAILURE;
+    }
+
+    // Get and print device properties
     cudaDeviceProp prop;
     CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
     printf("Using device: %s\n", prop.name);
@@ -94,9 +104,7 @@ int main(int argc, char **argv) {
     // Cleanup
     CUDA_CHECK(cudaEventDestroy(start));
     CUDA_CHECK(cudaEventDestroy(stop));
-    CUDA_CHECK(cudaFree(d_A));
-    CUDA_CHECK(cudaFree(d_B));
-    CUDA_CHECK(cudaFree(d_C));
+    CUDA_CHECK(cudaFree(d_A)); CUDA_CHECK(cudaFree(d_B)); CUDA_CHECK(cudaFree(d_C));
     free(h_A); free(h_B); free(h_C);
 
     return 0;
